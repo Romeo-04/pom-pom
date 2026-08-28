@@ -109,16 +109,19 @@ h1 {
     grid-template-columns: 340px 1fr;
     grid-template-areas:
       "pet timer"
+      "pet stats"
       "pet tasks";
   }
   .pet-well { grid-area: pet; }
   .timer-card { grid-area: timer; }
+  .stats { grid-area: stats; }
   .tasks { grid-area: tasks; }
 }
 
 .pet-well,
 .timer-card,
-.tasks {
+.tasks,
+.stats {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -189,6 +192,51 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 .timer-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.chip {
+  display: inline-flex;
+  margin: 0 0 var(--space-3);
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-subtle);
+  color: var(--accent);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+.cycle-meta, .hint {
+  margin: 0 0 var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.settings { margin-top: var(--space-4); }
+.settings summary {
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-weight: var(--weight-semibold);
+  color: var(--text-dim);
+}
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+.field { display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--text-xs); color: var(--text-muted); }
+.presets { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-3) 0; }
+.stat-row {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+}
+.stat-row strong { display: block; font-size: var(--text-lg); color: var(--text); }
+.stats h2, .tasks h2 {
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  margin: 0 0 var(--space-4);
+}
 .guard {
   display: flex;
   align-items: flex-start;
@@ -214,11 +262,6 @@ h1 {
   border: 0;
 }
 
-.tasks h2 {
-  font-family: var(--font-ui);
-  font-size: var(--text-md);
-  margin: 0 0 var(--space-4);
-}
 .task-form .row { display: flex; gap: var(--space-2); }
 .task-form .row .input { flex: 1; }
 .task-list { list-style: none; margin: var(--space-4) 0 0; padding: 0; display: grid; gap: var(--space-2); }
