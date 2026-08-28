@@ -44,7 +44,15 @@ export function elapsedMs(startedAt, now = Date.now()) {
   return Math.max(0, now - startedAt);
 }
 
+/** Split a running slice into elapsed (to credit if focus) and remaining (to freeze the clock). */
+export function pauseSlice(startedAt, durationMs, now = Date.now()) {
+  if (!startedAt || durationMs <= 0) return { elapsed: 0, remaining: 0 };
+  const elapsed = Math.min(durationMs, elapsedMs(startedAt, now));
+  return { elapsed, remaining: Math.max(0, durationMs - elapsed) };
+}
+
 /** Credit only actual elapsed focus time, capped at the planned duration. */
 export function creditFocusMs(startedAt, durationMs, now = Date.now()) {
-  return Math.min(durationMs, elapsedMs(startedAt, now));
+  return pauseSlice(startedAt, durationMs, now).elapsed;
 }
+

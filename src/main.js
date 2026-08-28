@@ -10,36 +10,53 @@ import {
   durationForPhase,
   isFocusPhase,
   nextPhaseAfter,
+  pauseSlice,
   PHASE,
   remainingMs,
 } from "./logic/pomodoro.js";
 import {
   addTask,
   applyFocusCredit,
+  clearDoneTasks,
   loadState,
   markEvolved,
   recordFocusCompletion,
   removeTask,
   saveState,
   selectTask,
+  setAutoStartBreaks,
+  setChimeOnComplete,
+  setDailyGoal,
+  setPauseOnLeave,
   setTabGuard,
+  setTimerSettings,
   toggleTask,
 } from "./logic/store.js";
 import { shouldAlertOnLeave, shouldFireAgain } from "./logic/tab-guard.js";
 import {
+  playCompleteChime,
   playLeaveAlert,
   requestLeaveNotifications,
   showLeaveNotification,
+  stopLeaveAlert,
   unlockAlertAudio,
 } from "./logic/alert-sound.js";
 import { bindInstallButton } from "./pwa.js";
 
 const BASE = import.meta.env.BASE_URL || "./";
 const PLACEHOLDER = (id) => `${BASE}pets/placeholders/${id}.svg`;
+const STAGES_ORDER = ["egg", "hatchling", "juvenile", "fledgling", "adult", "mythic"];
+const PRESETS = {
+  classic: { focusMs: 25 * 60 * 1000, shortBreakMs: 5 * 60 * 1000, longBreakMs: 15 * 60 * 1000 },
+  long: { focusMs: 50 * 60 * 1000, shortBreakMs: 10 * 60 * 1000, longBreakMs: 20 * 60 * 1000 },
+  sprint: { focusMs: 15 * 60 * 1000, shortBreakMs: 3 * 60 * 1000, longBreakMs: 10 * 60 * 1000 },
+};
 
 let state = loadState();
 let phase = PHASE.IDLE;
 let startedAt = null;
+let runDuration = 0;
+let pausedLeft = null;
 let tickId = null;
 let lastTabAlertAt = 0;
 let ignoreLeaveUntil = 0;
@@ -53,7 +70,9 @@ const els = {
   evolveFlash: document.getElementById("evolve-flash"),
   phaseLabel: document.getElementById("phase-label"),
   clock: document.getElementById("clock"),
+  cycleMeta: document.getElementById("cycle-meta"),
   btnStart: document.getElementById("btn-start"),
+  btnPause: document.getElementById("btn-pause"),
   btnSkip: document.getElementById("btn-skip"),
   btnReset: document.getElementById("btn-reset"),
   activeTask: document.getElementById("active-task"),
@@ -64,14 +83,31 @@ const els = {
   tabGuard: document.getElementById("tab-guard"),
   tabAlertLive: document.getElementById("tab-alert-live"),
   btnInstall: document.getElementById("btn-install"),
+  setFocus: document.getElementById("set-focus"),
+  setShort: document.getElementById("set-short"),
+  setLong: document.getElementById("set-long"),
+  setEvery: document.getElementById("set-every"),
+  setGoal: document.getElementById("set-goal"),
+  setAutostart: document.getElementById("set-autostart"),
+  setChime: document.getElementById("set-chime"),
+  setPauseLeave: document.getElementById("set-pause-leave"),
+  statPomos: document.getElementById("stat-pomos"),
+  statMinutes: document.getElementById("stat-minutes"),
+  statGoal: document.getElementById("stat-goal"),
+  goalFill: document.getElementById("goal-fill"),
+  btnClearDone: document.getElementById("btn-clear-done"),
 };
 
 function persist() {
   saveState(state);
 }
 
+function settings() {
+  return { ...DEFAULT_SETTINGS, ...state.settings };
+}
+
 function formatClock(ms) {
-  const total = Math.ceil(ms / 1000);
+  const total = Math.max(0, Math.ceil(ms / 1000));
   const m = Math.floor(total / 60);
   const s = total % 60;
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
@@ -83,8 +119,16 @@ function formatHours(ms) {
   return `${h.toFixed(2)} focused hours`;
 }
 
+function isRunning() {
+  return Boolean(startedAt) && phase !== PHASE.IDLE;
+}
+
+function isPaused() {
+  return pausedLeft != null && phase !== PHASE.IDLE;
+}
+
 function moodForPhase() {
-  if (phase === PHASE.FOCUS) return "focus";
+  if (phase === PHASE.FOCUS && isRunning()) return "focus";
   if (phase === PHASE.SHORT_BREAK || phase === PHASE.LONG_BREAK) return "rest";
   return "idle";
 }
@@ -130,8 +174,6 @@ function renderPet() {
   }
 }
 
-const STAGES_ORDER = ["egg", "hatchling", "juvenile", "fledgling", "adult", "mythic"];
-
 function flashEvolve() {
   els.evolveFlash.hidden = false;
   window.setTimeout(() => {
@@ -141,29 +183,62 @@ function flashEvolve() {
 
 function liveFocusedMs() {
   if (phase === PHASE.FOCUS && startedAt) {
-    return state.focusedMs + creditFocusMs(startedAt, durationForPhase(phase), Date.now());
+    return state.focusedMs + creditFocusMs(startedAt, runDuration, Date.now());
   }
   return state.focusedMs;
+}
+
+function displayRemaining() {
+  if (isPaused()) return pausedLeft;
+  if (isRunning()) return remainingMs(startedAt, runDuration);
+  return durationForPhase(PHASE.FOCUS, settings());
 }
 
 function renderTimer() {
   const labels = {
     [PHASE.IDLE]: "Ready",
-    [PHASE.FOCUS]: "Focus",
-    [PHASE.SHORT_BREAK]: "Short break",
-    [PHASE.LONG_BREAK]: "Long break",
+    [PHASE.FOCUS]: isPaused() ? "Focus paused" : "Focus",
+    [PHASE.SHORT_BREAK]: isPaused() ? "Break paused" : "Short break",
+    [PHASE.LONG_BREAK]: isPaused() ? "Break paused" : "Long break",
   };
-  els.phaseLabel.textContent = labels[phase];
-  const duration = durationForPhase(phase === PHASE.IDLE ? PHASE.FOCUS : phase);
-  const left = startedAt && phase !== PHASE.IDLE ? remainingMs(startedAt, duration) : duration;
-  els.clock.textContent = formatClock(left);
-  els.btnStart.textContent = phase === PHASE.IDLE ? "Start focus" : phase === PHASE.FOCUS ? "Running…" : "Start focus";
-  els.btnStart.disabled = phase === PHASE.FOCUS || phase === PHASE.SHORT_BREAK || phase === PHASE.LONG_BREAK;
+  els.phaseLabel.textContent = labels[phase] ?? "Ready";
+  els.clock.textContent = formatClock(displayRemaining());
+  const untilLong = settings().longBreakEvery - (state.focusCompletions % settings().longBreakEvery);
+  els.cycleMeta.textContent = `${untilLong} focus${untilLong === 1 ? "" : "es"} until a long break`;
+
+  const running = isRunning();
+  els.btnStart.textContent = isPaused()
+    ? "Resume"
+    : phase === PHASE.IDLE
+      ? "Start focus"
+      : running && phase !== PHASE.FOCUS
+        ? "Running…"
+        : "Start focus";
+  els.btnStart.disabled = running;
+  els.btnPause.disabled = !running;
+
   const active = state.tasks.find((t) => t.id === state.activeTaskId);
   els.activeTask.textContent = active
     ? `Feeding hours into: ${active.title}`
     : "No task selected — hours still count for the Inklet.";
   if (els.tabGuard) els.tabGuard.checked = state.tabGuardEnabled !== false;
+  if (els.setPauseLeave) els.setPauseLeave.checked = state.pauseOnLeave !== false;
+  if (els.setChime) els.setChime.checked = state.chimeOnComplete !== false;
+  if (els.setAutostart) els.setAutostart.checked = state.autoStartBreaks !== false;
+  if (els.setFocus) els.setFocus.value = String(Math.round(settings().focusMs / 60000));
+  if (els.setShort) els.setShort.value = String(Math.round(settings().shortBreakMs / 60000));
+  if (els.setLong) els.setLong.value = String(Math.round(settings().longBreakMs / 60000));
+  if (els.setEvery) els.setEvery.value = String(settings().longBreakEvery);
+  if (els.setGoal) els.setGoal.value = String(state.dailyGoalPomos || 4);
+}
+
+function renderStats() {
+  const today = state.today || { focusedMs: 0, pomos: 0 };
+  const goal = state.dailyGoalPomos || 4;
+  els.statPomos.textContent = String(today.pomos);
+  els.statMinutes.textContent = String(Math.round(today.focusedMs / 60000));
+  els.statGoal.textContent = `${today.pomos} / ${goal}`;
+  els.goalFill.style.width = `${Math.min(1, today.pomos / goal) * 100}%`;
 }
 
 function renderTasks() {
@@ -221,21 +296,41 @@ function renderTasks() {
 function render() {
   renderPet();
   renderTimer();
+  renderStats();
   renderTasks();
 }
 
-function settlePhase(credit) {
-  if (credit && isFocusPhase(phase) && startedAt) {
-    const ms = creditFocusMs(startedAt, durationForPhase(phase), Date.now());
-    state = applyFocusCredit(state, ms);
-    state = recordFocusCompletion(state);
+function pauseRunning() {
+  if (!isRunning()) return false;
+  const slice = pauseSlice(startedAt, runDuration, Date.now());
+  if (isFocusPhase(phase) && slice.elapsed > 0) {
+    state = applyFocusCredit(state, slice.elapsed);
     persist();
   }
+  pausedLeft = slice.remaining;
   startedAt = null;
+  return true;
+}
+
+function resumeRunning() {
+  if (!isPaused() || pausedLeft <= 0) {
+    begin(phase === PHASE.IDLE ? PHASE.FOCUS : phase);
+    return;
+  }
+  runDuration = pausedLeft;
+  pausedLeft = null;
+  startedAt = Date.now();
+  if (isFocusPhase(phase)) {
+    ignoreLeaveUntil = Date.now() + 1600;
+    unlockAlertAudio();
+  }
+  render();
 }
 
 function begin(next) {
   phase = next;
+  pausedLeft = null;
+  runDuration = durationForPhase(next, settings());
   startedAt = Date.now();
   if (isFocusPhase(next)) {
     ignoreLeaveUntil = Date.now() + 1600;
@@ -248,40 +343,73 @@ function begin(next) {
 function completeCurrent() {
   const completed = phase;
   const completions = state.focusCompletions;
-  settlePhase(isFocusPhase(completed));
+  if (isFocusPhase(completed) && startedAt) {
+    const ms = creditFocusMs(startedAt, runDuration, Date.now());
+    state = applyFocusCredit(state, ms);
+    state = recordFocusCompletion(state);
+    persist();
+  }
+  startedAt = null;
+  pausedLeft = null;
+  if (state.chimeOnComplete !== false) playCompleteChime();
+
   if (isFocusPhase(completed)) {
-    begin(nextPhaseAfter(completed, completions));
+    const next = nextPhaseAfter(completed, completions, settings());
+    if (state.autoStartBreaks !== false) {
+      begin(next);
+      return;
+    }
+    phase = PHASE.IDLE;
+    render();
     return;
   }
   phase = PHASE.IDLE;
-  startedAt = null;
   render();
 }
 
 function onTick() {
-  if (!startedAt || phase === PHASE.IDLE) return;
-  const duration = durationForPhase(phase);
-  if (remainingMs(startedAt, duration) <= 0) {
+  if (!isRunning()) return;
+  if (remainingMs(startedAt, runDuration) <= 0) {
     completeCurrent();
     return;
   }
   renderPet();
   renderTimer();
+  renderStats();
+}
+
+function pauseBecauseLeftTab() {
+  if (state.pauseOnLeave === false) return;
+  if (!isRunning()) return;
+  pauseRunning();
+  render();
 }
 
 els.btnStart.addEventListener("click", () => {
-  if (phase === PHASE.IDLE) begin(PHASE.FOCUS);
+  if (isPaused()) resumeRunning();
+  else if (phase === PHASE.IDLE) begin(PHASE.FOCUS);
+});
+
+els.btnPause.addEventListener("click", () => {
+  pauseRunning();
+  render();
 });
 
 els.tabGuard?.addEventListener("change", () => {
   state = setTabGuard(state, els.tabGuard.checked);
   persist();
+  if (els.tabGuard.checked) {
+    unlockAlertAudio();
+    requestLeaveNotifications();
+  } else {
+    stopLeaveAlert();
+  }
 });
 
 function fireTabLeaveAlert() {
   if (Date.now() < ignoreLeaveUntil) return;
   const enabled = state.tabGuardEnabled !== false;
-  if (!shouldAlertOnLeave({ phase, tabHidden: true, enabled })) return;
+  if (!shouldAlertOnLeave({ tabHidden: true, enabled })) return;
   const now = Date.now();
   if (!shouldFireAgain(lastTabAlertAt, now)) return;
   lastTabAlertAt = now;
@@ -289,30 +417,51 @@ function fireTabLeaveAlert() {
   showLeaveNotification();
   if (els.tabAlertLive) {
     els.tabAlertLive.textContent = "";
-    els.tabAlertLive.textContent = "You left this tab during focus. Come back.";
+    els.tabAlertLive.textContent = "Timer paused. Elapsed focus was saved.";
   }
 }
 
+function armTabAlarm() {
+  unlockAlertAudio();
+}
+
+document.addEventListener("pointerdown", armTabAlarm, { once: true });
+document.addEventListener("keydown", armTabAlarm, { once: true });
+
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "hidden") fireTabLeaveAlert();
+  if (document.visibilityState === "hidden") {
+    pauseBecauseLeftTab();
+    fireTabLeaveAlert();
+  } else {
+    stopLeaveAlert();
+  }
 });
 
-window.addEventListener("pagehide", fireTabLeaveAlert);
-window.addEventListener("blur", fireTabLeaveAlert);
+window.addEventListener("pagehide", () => {
+  pauseBecauseLeftTab();
+  fireTabLeaveAlert();
+});
 
 els.btnSkip.addEventListener("click", () => {
-  if (phase === PHASE.IDLE) return;
+  if (phase === PHASE.IDLE && !isPaused()) return;
+  if (isPaused()) {
+    pausedLeft = null;
+    phase = PHASE.IDLE;
+    render();
+    return;
+  }
   completeCurrent();
 });
 
 els.btnReset.addEventListener("click", () => {
   if (isFocusPhase(phase) && startedAt) {
-    const ms = creditFocusMs(startedAt, durationForPhase(phase), Date.now());
+    const ms = creditFocusMs(startedAt, runDuration, Date.now());
     state = applyFocusCredit(state, ms);
     persist();
   }
   phase = PHASE.IDLE;
   startedAt = null;
+  pausedLeft = null;
   render();
 });
 
@@ -322,6 +471,77 @@ els.form.addEventListener("submit", (e) => {
   els.input.value = "";
   persist();
   render();
+});
+
+els.btnClearDone?.addEventListener("click", () => {
+  state = clearDoneTasks(state);
+  persist();
+  render();
+});
+
+function minutesField(el, key) {
+  el?.addEventListener("change", () => {
+    const mins = Math.min(90, Math.max(1, Number(el.value) || 1));
+    state = setTimerSettings(state, { [key]: mins * 60 * 1000 });
+    persist();
+    if (!isRunning() && !isPaused()) render();
+  });
+}
+
+minutesField(els.setFocus, "focusMs");
+minutesField(els.setShort, "shortBreakMs");
+minutesField(els.setLong, "longBreakMs");
+
+els.setEvery?.addEventListener("change", () => {
+  state = setTimerSettings(state, { longBreakEvery: Math.min(12, Math.max(2, Number(els.setEvery.value) || 4)) });
+  persist();
+  renderTimer();
+});
+
+els.setGoal?.addEventListener("change", () => {
+  state = setDailyGoal(state, els.setGoal.value);
+  persist();
+  renderStats();
+  renderTimer();
+});
+
+els.setAutostart?.addEventListener("change", () => {
+  state = setAutoStartBreaks(state, els.setAutostart.checked);
+  persist();
+});
+
+els.setChime?.addEventListener("change", () => {
+  state = setChimeOnComplete(state, els.setChime.checked);
+  persist();
+});
+
+els.setPauseLeave?.addEventListener("change", () => {
+  state = setPauseOnLeave(state, els.setPauseLeave.checked);
+  persist();
+});
+
+document.querySelectorAll("[data-preset]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const preset = PRESETS[btn.dataset.preset];
+    if (!preset) return;
+    state = setTimerSettings(state, preset);
+    persist();
+    render();
+  });
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.code !== "Space") return;
+  const tag = document.activeElement?.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SUMMARY") return;
+  e.preventDefault();
+  if (isRunning()) {
+    pauseRunning();
+    render();
+  } else if (isPaused() || phase === PHASE.IDLE) {
+    if (isPaused()) resumeRunning();
+    else begin(PHASE.FOCUS);
+  }
 });
 
 const debug = document.createElement("button");
@@ -342,7 +562,7 @@ render();
 
 window.addEventListener("beforeunload", () => {
   if (isFocusPhase(phase) && startedAt) {
-    const ms = creditFocusMs(startedAt, durationForPhase(phase), Date.now());
+    const ms = creditFocusMs(startedAt, runDuration, Date.now());
     state = applyFocusCredit(state, ms);
     persist();
   }

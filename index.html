@@ -52,19 +52,70 @@
         </section>
 
         <section class="timer-card" aria-labelledby="phase-label">
+          <p id="status-chip" class="chip">Saved on this device</p>
           <p id="phase-label" class="phase"></p>
           <p id="clock" class="clock">25:00</p>
+          <p id="cycle-meta" class="cycle-meta"></p>
           <div class="timer-actions">
             <button type="button" id="btn-start" class="btn btn-primary">Start focus</button>
+            <button type="button" id="btn-pause" class="btn btn-secondary">Pause</button>
             <button type="button" id="btn-skip" class="btn btn-secondary">Skip</button>
             <button type="button" id="btn-reset" class="btn btn-ghost">Reset</button>
           </div>
           <p id="active-task" class="active-task"></p>
+          <p class="hint">Space starts or pauses. Leaving this tab pauses focus and keeps the minutes you already sat.</p>
           <label class="guard">
             <input type="checkbox" id="tab-guard" checked />
-            Sound an alarm if I leave this tab during focus
+            Alarm + pause when I leave this tab
           </label>
           <p id="tab-alert-live" class="sr-only" aria-live="assertive"></p>
+          <details class="settings">
+            <summary>Timer settings</summary>
+            <div class="settings-grid">
+              <label class="field">Focus (min)
+                <input id="set-focus" class="input" type="number" min="1" max="90" value="25" />
+              </label>
+              <label class="field">Short break
+                <input id="set-short" class="input" type="number" min="1" max="30" value="5" />
+              </label>
+              <label class="field">Long break
+                <input id="set-long" class="input" type="number" min="1" max="45" value="15" />
+              </label>
+              <label class="field">Long break every
+                <input id="set-every" class="input" type="number" min="2" max="12" value="4" />
+              </label>
+              <label class="field">Daily goal (pomos)
+                <input id="set-goal" class="input" type="number" min="1" max="24" value="4" />
+              </label>
+            </div>
+            <div class="presets">
+              <button type="button" class="btn btn-tiny btn-secondary" data-preset="classic">25 / 5 / 15</button>
+              <button type="button" class="btn btn-tiny btn-secondary" data-preset="long">50 / 10 / 20</button>
+              <button type="button" class="btn btn-tiny btn-secondary" data-preset="sprint">15 / 3 / 10</button>
+            </div>
+            <label class="guard">
+              <input type="checkbox" id="set-autostart" checked />
+              Auto-start breaks after a focus
+            </label>
+            <label class="guard">
+              <input type="checkbox" id="set-chime" checked />
+              Chime when a session ends
+            </label>
+            <label class="guard">
+              <input type="checkbox" id="set-pause-leave" checked />
+              Pause the clock when I leave (still credit elapsed focus)
+            </label>
+          </details>
+        </section>
+
+        <section class="stats" aria-labelledby="stats-heading">
+          <h2 id="stats-heading">Today</h2>
+          <ul class="stat-row">
+            <li><strong id="stat-pomos">0</strong> pomos</li>
+            <li><strong id="stat-minutes">0</strong> focused min</li>
+            <li><strong id="stat-goal">0 / 4</strong> goal</li>
+          </ul>
+          <div class="meter" aria-hidden="true"><div id="goal-fill" class="meter-fill"></div></div>
         </section>
 
         <section class="tasks" aria-labelledby="tasks-heading">
@@ -78,6 +129,7 @@
           </form>
           <ul id="task-list" class="task-list"></ul>
           <p id="empty-tasks" class="empty">Add one task, then start a focus. The Inklet tracks the hours, not the checkmarks.</p>
+          <button type="button" id="btn-clear-done" class="btn btn-ghost btn-tiny">Clear finished</button>
         </section>
       </main>
     </div>

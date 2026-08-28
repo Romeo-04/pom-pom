@@ -6,7 +6,7 @@ import {
   stageForHours,
   STAGES,
 } from "./evolution.js";
-import { creditFocusMs, nextPhaseAfter, PHASE } from "./pomodoro.js";
+import { creditFocusMs, nextPhaseAfter, pauseSlice, PHASE } from "./pomodoro.js";
 
 describe("stageForHours", () => {
   it("starts as egg", () => {
@@ -55,6 +55,11 @@ describe("pomodoro cycle", () => {
   it("caps credited time at the planned duration", () => {
     const start = 1_000_000;
     expect(creditFocusMs(start, 25_000, start + 40_000)).toBe(25_000);
+  });
+
+  it("pauses with elapsed plus remaining", () => {
+    const start = 10_000;
+    expect(pauseSlice(start, 25_000, start + 7_000)).toEqual({ elapsed: 7_000, remaining: 18_000 });
   });
 });
 
