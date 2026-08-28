@@ -43,6 +43,7 @@ import {
   unlockAlertAudio,
 } from "./logic/alert-sound.js";
 import { bindInstallButton } from "./pwa.js";
+import { patchSettings, queueCredit, queueTask, startSync } from "./sync.js";
 
 const BASE = import.meta.env.BASE_URL || "./";
 const PLACEHOLDER = (id) => `${BASE}pets/placeholders/${id}.svg`;
@@ -81,6 +82,7 @@ const els = {
   input: document.getElementById("task-input"),
   list: document.getElementById("task-list"),
   empty: document.getElementById("empty-tasks"),
+  syncStatus: document.getElementById("sync-status"),
   tabGuard: document.getElementById("tab-guard"),
   tabAlertLive: document.getElementById("tab-alert-live"),
   btnInstall: document.getElementById("btn-install"),
@@ -352,10 +354,12 @@ function render() {
 
 function pauseRunning() {
   if (!isRunning()) return false;
-  const slice = pauseSlice(startedAt, runDuration, Date.now());
+  const now = Date.now();
+  const slice = pauseSlice(startedAt, runDuration, now);
   if (isFocusPhase(phase) && slice.elapsed > 0) {
     state = applyFocusCredit(state, slice.elapsed);
     persist();
+    queueCredit({ startedAt, endedAt: now });
   }
   pausedLeft = slice.remaining;
   startedAt = null;
@@ -394,10 +398,12 @@ function completeCurrent() {
   const completed = phase;
   const completions = state.focusCompletions;
   if (isFocusPhase(completed) && startedAt) {
-    const ms = creditFocusMs(startedAt, runDuration, Date.now());
+    const now = Date.now();
+    const ms = creditFocusMs(startedAt, runDuration, now);
     state = applyFocusCredit(state, ms);
     state = recordFocusCompletion(state);
     persist();
+    queueCredit({ startedAt, endedAt: now });
   }
   startedAt = null;
   pausedLeft = null;
@@ -455,6 +461,7 @@ els.tabGuard?.addEventListener("change", () => {
   } else {
     stopLeaveAlert();
   }
+  patchSettings({ tabGuardEnabled: els.tabGuard.checked }).catch(() => {});
 });
 
 function fireTabLeaveAlert() {
@@ -506,9 +513,11 @@ els.btnSkip.addEventListener("click", () => {
 
 els.btnReset.addEventListener("click", () => {
   if (isFocusPhase(phase) && startedAt) {
-    const ms = creditFocusMs(startedAt, runDuration, Date.now());
+    const now = Date.now();
+    const ms = creditFocusMs(startedAt, runDuration, now);
     state = applyFocusCredit(state, ms);
     persist();
+    queueCredit({ startedAt, endedAt: now });
   }
   phase = PHASE.IDLE;
   startedAt = null;
@@ -518,10 +527,12 @@ els.btnReset.addEventListener("click", () => {
 
 els.form.addEventListener("submit", (e) => {
   e.preventDefault();
-  state = addTask(state, els.input.value);
+  const title = els.input.value.trim();
+  state = addTask(state, title);
   els.input.value = "";
   persist();
   render();
+  if (title) queueTask({ title });
 });
 
 els.btnClearDone?.addEventListener("click", () => {
@@ -622,15 +633,31 @@ document.querySelectorAll("[data-nav]").forEach((btn) => {
   });
 });
 
+function updateSyncStatus(status) {
+  if (!els.syncStatus) return;
+  const labels = {
+    synced: "Synced",
+    pending: "Syncing…",
+    offline: "Saved on this device only",
+  };
+  els.syncStatus.textContent = labels[status] ?? "";
+  els.syncStatus.classList.toggle("is-synced", status === "synced");
+  els.syncStatus.classList.toggle("is-offline", status === "offline");
+  els.syncStatus.hidden = false;
+}
+
 tickId = window.setInterval(onTick, 250);
 bindInstallButton(els.btnInstall);
+startSync({ onStatusChange: updateSyncStatus });
 render();
 
 window.addEventListener("beforeunload", () => {
   if (isFocusPhase(phase) && startedAt) {
-    const ms = creditFocusMs(startedAt, runDuration, Date.now());
+    const now = Date.now();
+    const ms = creditFocusMs(startedAt, runDuration, now);
     state = applyFocusCredit(state, ms);
     persist();
+    queueCredit({ startedAt, endedAt: now });
   }
   window.clearInterval(tickId);
 });

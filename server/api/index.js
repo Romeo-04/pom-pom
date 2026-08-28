@@ -12,8 +12,11 @@ import { createPool } from "../src/repos/pg/pool.js";
  * serverless guide documents.
  *
  * The app is built once per warm lambda instance (module-level singleton) and reused
- * across invocations; a cold start pays for buildApp() again, which is why repos.probe
- * runs fire-and-forget rather than blocking the first request on it.
+ * across invocations. Unlike the long-lived server (src/index.js), a serverless
+ * instance has no guarantee it survives to serve a second request, so probeAll is
+ * awaited here rather than fire-and-forget — otherwise /health would report
+ * "degraded" on every cold start even with a working DATABASE_URL, because the
+ * probe would still be in flight when the response went out.
  */
 let appPromise;
 
@@ -27,7 +30,7 @@ async function getApp() {
       if (config.databaseUrl) {
         const pool = createPool(config);
         repos = createPgRepos(pool);
-        probeAll({ repos, health }).catch(() => {});
+        await probeAll({ repos, health }).catch(() => {});
       }
 
       const app = await buildApp({ config, repos, health });
