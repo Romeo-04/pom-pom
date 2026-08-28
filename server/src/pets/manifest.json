@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "stages": [
+    { "id": "egg", "file": "inklet-egg.png", "placeholder": "pets/placeholders/egg.svg" },
+    { "id": "hatchling", "file": "inklet-hatchling.png", "placeholder": "pets/placeholders/hatchling.svg" },
+    { "id": "juvenile", "file": "inklet-juvenile.png", "placeholder": "pets/placeholders/juvenile.svg" },
+    { "id": "fledgling", "file": "inklet-fledgling.png", "placeholder": "pets/placeholders/fledgling.svg" },
+    { "id": "adult", "file": "inklet-adult.png", "placeholder": "pets/placeholders/adult.svg" },
+    { "id": "mythic", "file": "inklet-mythic.png", "placeholder": "pets/placeholders/mythic.svg" }
+  ]
+}
