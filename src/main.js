@@ -2,6 +2,7 @@ import {
   hoursFromMs,
   petAssetPath,
   progressToNext,
+  STAGES,
   stageForMs,
 } from "./logic/evolution.js";
 import {
@@ -98,6 +99,8 @@ const els = {
   statGoal: document.getElementById("stat-goal"),
   goalFill: document.getElementById("goal-fill"),
   btnClearDone: document.getElementById("btn-clear-done"),
+  evoPath: document.getElementById("evo-path"),
+  evoStanding: document.getElementById("evo-standing"),
 };
 
 function persist() {
@@ -303,11 +306,48 @@ function renderTasks() {
   }
 }
 
+function renderEvolution() {
+  if (!els.evoPath) return;
+  const liveMs = liveFocusedMs();
+  const hours = hoursFromMs(liveMs);
+  const current = stageForMs(liveMs);
+
+  els.evoPath.replaceChildren();
+  for (const stage of STAGES) {
+    const li = document.createElement("li");
+    li.className = "evo-stage";
+    const reached = hours >= stage.hours;
+    if (reached) li.classList.add("is-reached");
+    if (stage.id === current.id) {
+      li.classList.add("is-current");
+      li.setAttribute("aria-current", "step");
+    }
+
+    const name = document.createElement("span");
+    name.className = "evo-stage-name";
+    name.textContent = stage.name;
+
+    const cost = document.createElement("span");
+    cost.className = "evo-stage-cost";
+    cost.textContent = stage.hours === 0 ? "from the start" : `${stage.hours} focused h`;
+
+    li.append(name, cost);
+    els.evoPath.append(li);
+  }
+
+  if (!els.evoStanding) return;
+  const progress = progressToNext(hours);
+  els.evoStanding.textContent = progress.next
+    ? `${current.name} now — ${progress.hoursNeeded.toFixed(2)} h until ${progress.next.name}.`
+    : `${current.name} — the last stage. Keep stacking hours if you want.`;
+}
+
 function render() {
   renderPet();
   renderTimer();
   renderStats();
   renderTasks();
+  renderEvolution();
 }
 
 function pauseRunning() {
@@ -386,6 +426,7 @@ function onTick() {
   renderPet();
   renderTimer();
   renderStats();
+  renderEvolution();
 }
 
 function pauseBecauseLeftTab() {
@@ -573,7 +614,10 @@ document.querySelectorAll("[data-nav]").forEach((btn) => {
       panel.hidden = panel.dataset.panel !== id;
     });
     document.querySelectorAll("[data-nav]").forEach((nav) => {
-      nav.classList.toggle("is-active", nav === btn);
+      const active = nav === btn;
+      nav.classList.toggle("is-active", active);
+      if (active) nav.setAttribute("aria-current", "page");
+      else nav.removeAttribute("aria-current");
     });
   });
 });

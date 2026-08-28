@@ -348,7 +348,30 @@ body {
   padding-left: 1.2rem;
   color: var(--text-dim);
 }
-.evo-path li { margin: var(--space-2) 0; }
+.evo-stage {
+  margin: var(--space-2) 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  opacity: 0.55;
+}
+.evo-stage.is-reached { opacity: 1; }
+.evo-stage.is-current {
+  background: var(--surface-container);
+  border-color: var(--accent);
+  color: var(--text);
+}
+.evo-stage-name { font-weight: var(--weight-semibold); }
+.evo-stage-cost { font-size: var(--text-xs); color: var(--text-muted); white-space: nowrap; }
+.evo-standing {
+  margin: var(--space-4) 0 0;
+  color: var(--text-dim);
+  font-size: var(--text-sm);
+}
 
 .label {
   display: block;
