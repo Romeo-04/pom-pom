@@ -4,3 +4,7 @@ dist
 .stitch
 .git/COMMIT_MSG_CLEAN
 .git/NEWSHA
+.env
+server/.env
+docs
+mocks
