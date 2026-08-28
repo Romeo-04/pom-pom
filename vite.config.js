@@ -58,5 +58,8 @@ export default defineConfig({
   ],
   test: {
     environment: "node",
+    // Server tests run under server/vitest.config.js via `npm run test:server`.
+    // Keeping them out of the root run leaves the Pages deploy (npm test) frontend-only.
+    include: ["src/**/*.test.js", "packages/**/test/**/*.test.js"],
   },
 });

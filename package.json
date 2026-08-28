@@ -3,11 +3,19 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "workspaces": [
+    "packages/*",
+    "server"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:server": "npm test --workspace hatch-server",
+    "test:all": "npm test && npm run test:server",
+    "dev:server": "npm run dev --workspace hatch-server",
+    "migrate": "npm run migrate --workspace hatch-server",
     "icons": "node scripts/generate-icons.mjs"
   },
   "devDependencies": {

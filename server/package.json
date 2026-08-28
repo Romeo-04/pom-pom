@@ -1,0 +1,24 @@
+{
+  "name": "hatch-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.9" },
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env --watch src/index.js",
+    "start": "node src/index.js",
+    "migrate": "node --env-file-if-exists=.env src/repos/migrate.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.0.1",
+    "@fastify/rate-limit": "^10.2.1",
+    "fastify": "^5.2.0",
+    "hatch-core": "*",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.8"
+  }
+}
