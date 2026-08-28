@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hatch — study hours grow an Inklet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Figtree:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <!--
+      THESIS: Focus hours are the only food; the pet is a progress bar with a face, not a Tamagotchi hunger sim or a generic todo list.
+      OWN-WORLD: Ink-den: near-black indigo field, cream pet well, rust ticks, periwinkle controls. Figtree labels, Atkinson body.
+      STORY: Pick a task, run a pomodoro, watch the Inklet climb stages as credited focus time stacks.
+      FIRST VIEWPORT: Pet well left/top, timer + start as the action, task list to the right/below.
+      FORM: Operate / study den. Seed: user-pinned Hatch + Inklet.
+      FINISH: logic + Gemini brief shipped; DESIGN.md after visual finish if we keep iterating.
+    -->
+    <div class="app">
+      <header class="top">
+        <div>
+          <p class="eyebrow">Hatch</p>
+          <h1>Your Inklet grows on focused hours</h1>
+        </div>
+        <p class="lede">Tasks stay a list. The creature only eats Pomodoro <strong>focus</strong> time — breaks do not count.</p>
+      </header>
+
+      <main class="grid">
+        <section class="pet-well" aria-labelledby="pet-name">
+          <div class="pet-stage">
+            <img id="pet-img" class="pet-img" alt="" width="320" height="320" />
+            <div id="evolve-flash" class="evolve-flash" hidden>Evolved</div>
+          </div>
+          <h2 id="pet-name"></h2>
+          <p id="pet-hours" class="hours"></p>
+          <div class="meter" aria-hidden="true">
+            <div id="meter-fill" class="meter-fill"></div>
+          </div>
+          <p id="pet-next" class="next"></p>
+        </section>
+
+        <section class="timer-card" aria-labelledby="phase-label">
+          <p id="phase-label" class="phase"></p>
+          <p id="clock" class="clock">25:00</p>
+          <div class="timer-actions">
+            <button type="button" id="btn-start" class="btn btn-primary">Start focus</button>
+            <button type="button" id="btn-skip" class="btn btn-secondary">Skip</button>
+            <button type="button" id="btn-reset" class="btn btn-ghost">Reset</button>
+          </div>
+          <p id="active-task" class="active-task"></p>
+          <label class="guard">
+            <input type="checkbox" id="tab-guard" checked />
+            Sound an alarm if I leave this tab during focus
+          </label>
+          <p id="tab-alert-live" class="sr-only" aria-live="assertive"></p>
+        </section>
+
+        <section class="tasks" aria-labelledby="tasks-heading">
+          <h2 id="tasks-heading">Today</h2>
+          <form id="task-form" class="task-form">
+            <label class="label" for="task-input">New task</label>
+            <div class="row">
+              <input id="task-input" class="input" name="title" maxlength="80" placeholder="Read chapter 4" autocomplete="off" />
+              <button type="submit" class="btn btn-primary">Add</button>
+            </div>
+          </form>
+          <ul id="task-list" class="task-list"></ul>
+          <p id="empty-tasks" class="empty">Add one task, then start a focus. The Inklet tracks the hours, not the checkmarks.</p>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
