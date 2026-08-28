@@ -49,7 +49,8 @@ export function progressToNext(hours) {
   };
 }
 
-export function petAssetPath(stageId, mood = "idle") {
+export function petAssetPath(stageId, mood = "idle", base = "/") {
   const suffix = mood === "idle" ? "" : `-${mood}`;
-  return `/pets/inklet-${stageId}${suffix}.png`;
+  const root = base.endsWith("/") ? base : `${base}/`;
+  return `${root}pets/inklet-${stageId}${suffix}.png`;
 }

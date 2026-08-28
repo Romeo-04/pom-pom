@@ -1,6 +1,8 @@
-# Hatch
+# Pom-pom
 
-Student task tracker: Pomodoro focus time is the only thing that feeds an **Inklet**. Breaks do not count. The creature evolves at 2 / 8 / 20 / 45 / 80 focused hours.
+Installable PWA: student Pomodoro tracker. Focus hours feed an **Inklet**. Breaks do not count.
+
+Repo: [github.com/Romeo-04/pom-pom](https://github.com/Romeo-04/pom-pom)
 
 ## Run
 
@@ -10,6 +12,27 @@ npm test
 npm run dev
 ```
 
+PWA (service worker, install prompt) is produced on **build**:
+
+```bash
+npm run build
+npm run preview
+```
+
+Then open the preview URL and use the browser’s install / “Add to Home Screen” control. Dev mode (`npm run dev`) does not register the production service worker.
+
+After GitHub Pages is enabled, the live app is:
+
+https://romeo-04.github.io/pom-pom/
+
+## Offline
+
+The service worker caches the app shell, pet placeholders, and icons. Tasks and hours still live in `localStorage` on the device. Google fonts cache after the first online visit.
+
 ## Gemini art
 
-Open [`docs/gemini-pet-assets.md`](docs/gemini-pet-assets.md). Generate the six stage PNGs, then drop them into `public/pets/` using the filenames in that doc. Until then, SVG placeholders load automatically.
+See [`docs/gemini-pet-assets.md`](docs/gemini-pet-assets.md).
+
+## FE / BE split
+
+See [`docs/fe-be-task-assignment.md`](docs/fe-be-task-assignment.md).

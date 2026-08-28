@@ -32,8 +32,10 @@ import {
   showLeaveNotification,
   unlockAlertAudio,
 } from "./logic/alert-sound.js";
+import { bindInstallButton } from "./pwa.js";
 
-const PLACEHOLDER = (id) => `/pets/placeholders/${id}.svg`;
+const BASE = import.meta.env.BASE_URL || "./";
+const PLACEHOLDER = (id) => `${BASE}pets/placeholders/${id}.svg`;
 
 let state = loadState();
 let phase = PHASE.IDLE;
@@ -61,6 +63,7 @@ const els = {
   empty: document.getElementById("empty-tasks"),
   tabGuard: document.getElementById("tab-guard"),
   tabAlertLive: document.getElementById("tab-alert-live"),
+  btnInstall: document.getElementById("btn-install"),
 };
 
 function persist() {
@@ -88,8 +91,8 @@ function moodForPhase() {
 
 function setPetSrc(stageId) {
   const mood = moodForPhase();
-  const preferred = petAssetPath(stageId, mood);
-  const fallbackIdle = petAssetPath(stageId, "idle");
+  const preferred = petAssetPath(stageId, mood, BASE);
+  const fallbackIdle = petAssetPath(stageId, "idle", BASE);
   const img = els.petImg;
   img.dataset.stage = stageId;
   img.onerror = () => {
@@ -334,6 +337,7 @@ debug.addEventListener("click", () => {
 document.querySelector(".pet-well")?.append(debug);
 
 tickId = window.setInterval(onTick, 250);
+bindInstallButton(els.btnInstall);
 render();
 
 window.addEventListener("beforeunload", () => {

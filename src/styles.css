@@ -72,7 +72,15 @@ body {
   padding: var(--space-8) clamp(16px, 4vw, 56px) var(--space-16);
 }
 
-.top { margin-bottom: var(--space-8); max-width: 40rem; }
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+.top > div { max-width: 40rem; }
 .eyebrow {
   font-family: var(--font-ui);
   font-size: var(--text-xs);
