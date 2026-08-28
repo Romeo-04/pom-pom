@@ -4,7 +4,7 @@
 
 Your tasks stay a plain list. A small ink-creature — the **Inklet** — grows on one currency: minutes you actually sat still. Breaks do not feed it. Ticking a checkbox does not feed it. Leaving the tab pauses the clock and keeps only the minutes you really did.
 
-**Live app → [romeo-04.github.io/pom-pom](https://romeo-04.github.io/pom-pom/)** · installable PWA · works offline · no account, no server
+**Live app → [romeo-04.github.io/pom-pom](https://romeo-04.github.io/pom-pom/)** · installable PWA · works offline · no account needed
 
 <p align="center">
   <img src="docs/screenshots/dashboard.png" alt="Pom-pom dashboard: the Inklet at Pup stage, a 25:00 timer, today's stats, and the next-evolution meter" width="420">
@@ -82,7 +82,7 @@ Thresholds are slow on purpose. You cannot binge-evolve in one all-nighter.
 
 **Partial focus is real focus.** Pause, Reset, closing the tab, and leaving mid-session all credit elapsed time, capped at the planned duration. Quitting at minute 18 of 25 earns 18 minutes, not zero.
 
-**Your hours stay yours.** Everything lives in `localStorage` under `hatch.v1`. No account, no network call, no analytics. Today's totals roll over on date change.
+**Your hours stay yours.** The client keeps everything in `localStorage` under `hatch.v1` — no account, no network call, no analytics, and today's totals roll over on date change. The optional backend below is genuinely optional: nothing in `src/` calls it.
 
 ---
 
@@ -90,7 +90,7 @@ Thresholds are slow on purpose. You cannot binge-evolve in one all-nighter.
 
 The UI is the **Ink & Kit** system: warm paper (`#fff8f0`) with a faint fractal-noise grain, ink-indigo primary (`#271274`), periwinkle accent (`#5442d6`), gold and rust highlights. Domine (serif) for display, Hanken Grotesk for UI. Soft cards on paper shadow, a pill-shaped floating dock, 640px max column.
 
-Tokens live at the top of [`src/styles.css`](src/styles.css). The generation brief for the Inklet artwork is in [`docs/gemini-pet-assets.md`](docs/gemini-pet-assets.md); until real PNGs land in `public/pets/`, the app uses the SVG placeholders in `public/pets/placeholders/`.
+Tokens live at the top of [`src/styles.css`](src/styles.css). Stage artwork is looked up as `public/pets/inklet-{stage}.png` (optionally `-focus` / `-rest` per mood); until those land, the app falls back to the SVG placeholders in `public/pets/placeholders/`. The generation brief is in [`docs/gemini-pet-assets.md`](docs/gemini-pet-assets.md).
 
 ---
 
@@ -98,9 +98,11 @@ Tokens live at the top of [`src/styles.css`](src/styles.css). The generation bri
 
 ```bash
 npm install
-npm test      # 12 tests — evolution thresholds + tab-guard logic
+npm test      # 18 tests — evolution, tab-guard, and the hatch-core parity contract
 npm run dev   # http://localhost:5173
 ```
+
+This is an npm workspaces repo, so `npm install` at the root also wires `packages/hatch-core` and `server`.
 
 The service worker and install prompt only exist in a **build**:
 
@@ -112,26 +114,37 @@ npm run preview
 Then use the browser's install / "Add to Home Screen" control. `npm run dev` deliberately does not register the production service worker.
 
 ```bash
-npm run icons   # regenerate PWA icons from the source SVG
+npm run icons        # regenerate PWA icons from the source SVG
+npm run dev:server   # the optional API on :8787
+npm run test:server  # 85 server tests (the Postgres ones skip without DATABASE_URL)
+npm run test:all     # both suites
 ```
 
 ---
 
 ## Stack
 
-Vanilla JS, no framework. [Vite 6](https://vite.dev) + [vite-plugin-pwa](https://vite-pwa-org.netlify.app) (Workbox `generateSW`), [Vitest](https://vitest.dev) for the logic tests. Web Audio for the alarm and chime; the alarm also has a generated WAV fallback so it can sound while the tab is hidden.
+The app is vanilla JS, no framework. [Vite 6](https://vite.dev) + [vite-plugin-pwa](https://vite-pwa-org.netlify.app) (Workbox `generateSW`), [Vitest](https://vitest.dev) for the logic tests. Web Audio for the alarm and chime; the alarm also has a generated WAV fallback so it can sound while the tab is hidden.
 
 ```
-src/
-  main.js              wiring: render loop, events, tab switching
-  pwa.js               service-worker registration + install button
-  styles.css           Ink & Kit tokens and components
+src/                     the PWA — everything above runs from here alone
+  main.js                wiring: render loop, events, tab switching
+  pwa.js                 service-worker registration + install button
+  styles.css             Ink & Kit tokens and components
   logic/
-    pomodoro.js        phases, durations, cycle math, elapsed-time credit
-    evolution.js       STAGES table, thresholds, progress, asset paths
-    store.js           localStorage state, tasks, daily rollover
-    tab-guard.js       leave-detection rules + alarm cooldown
-    alert-sound.js     Web Audio alarm, chime, notifications
+    pomodoro.js          phases, durations, cycle math, elapsed-time credit
+    evolution.js         STAGES table, thresholds, progress, asset paths
+    store.js             localStorage state, tasks, daily rollover
+    tab-guard.js         leave-detection rules + alarm cooldown
+    alert-sound.js       Web Audio alarm, chime, notifications
+
+packages/hatch-core/     the shared kernel: one copy of the stage thresholds
+                         and cycle math, with a parity test pinning it to src/logic/
+
+server/                  optional Fastify API (nothing in src/ calls it yet)
+  src/modules/           identity, tasks, ledger, pets, settings, sync, health
+  src/repos/             swappable storage: in-memory or Postgres
+  api/index.js           Vercel serverless entry
 ```
 
 `src/logic/` is pure and dependency-free — no DOM, no browser globals in the hot paths — which is why it's the part under test.
@@ -147,5 +160,6 @@ Pushing to `main` runs [`.github/workflows/pages.yml`](.github/workflows/pages.y
 ## More
 
 - [`docs/showcase-script.md`](docs/showcase-script.md) — the live-demo script, beat by beat
+- [`docs/fe-be-task-assignment.md`](docs/fe-be-task-assignment.md) — the module contract the backend is built against
 - [`docs/gemini-pet-assets.md`](docs/gemini-pet-assets.md) — Inklet art brief and stage prompts
-- [`docs/fe-be-task-assignment.md`](docs/fe-be-task-assignment.md) — how this would split into FE/BE modules if a server is ever added
+- [`server/.env.example`](server/.env.example) — the API's environment surface

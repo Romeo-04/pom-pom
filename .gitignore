@@ -6,6 +6,5 @@ dist
 .git/NEWSHA
 .env
 server/.env
-docs
 mocks
 .vercel
