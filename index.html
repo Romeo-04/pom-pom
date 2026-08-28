@@ -1,76 +1,124 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Pom-pom — study hours grow an Inklet</title>
-    <meta name="theme-color" content="#1a1233" />
+    <meta name="theme-color" content="#fff8f0" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Pom-pom" />
     <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="./icons/icon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Figtree:wght@500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Domine:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
-    <!--
-      THESIS: Focus hours are the only food; the pet is a progress bar with a face, not a Tamagotchi hunger sim or a generic todo list.
-      OWN-WORLD: Ink-den: near-black indigo field, cream pet well, rust ticks, periwinkle controls. Figtree labels, Atkinson body.
-      STORY: Pick a task, run a pomodoro, watch the Inklet climb stages as credited focus time stacks.
-      FIRST VIEWPORT: Pet well left/top, timer + start as the action, task list to the right/below.
-      FORM: Operate / study den. Seed: user-pinned Hatch + Inklet.
-      FINISH: logic + Gemini brief shipped; DESIGN.md after visual finish if we keep iterating.
-    -->
     <div class="app">
       <header class="top">
-        <div>
-          <p class="eyebrow">Pom-pom</p>
-          <h1>Your Inklet grows on focused hours</h1>
-          <p class="lede">Tasks stay a list. The creature only eats Pomodoro <strong>focus</strong> time — breaks do not count.</p>
-        </div>
-        <button type="button" id="btn-install" class="btn btn-secondary" hidden>Install app</button>
+        <img class="brand-mark" src="./icons/icon.svg" alt="" width="32" height="32" />
+        <h1 class="brand">Inklet</h1>
+        <button type="button" id="btn-install" class="btn btn-ghost btn-icon" hidden>Install</button>
       </header>
 
-      <main class="grid">
-        <section class="pet-well" aria-labelledby="pet-name">
-          <div class="pet-stage">
-            <img id="pet-img" class="pet-img" alt="" width="320" height="320" />
-            <div id="evolve-flash" class="evolve-flash" hidden>Evolved</div>
+      <main>
+        <section id="panel-dash" class="panel" data-panel="dash">
+          <article class="pet-well hero-card">
+            <div class="pet-stage">
+              <img id="pet-img" class="pet-img" alt="" width="320" height="320" />
+              <div id="evolve-flash" class="evolve-flash" hidden>Evolved</div>
+            </div>
+            <h2 id="pet-name">Ready to Focus?</h2>
+            <p id="phase-label" class="phase">Ready</p>
+            <p id="clock" class="clock">25:00</p>
+            <p id="cycle-meta" class="cycle-meta"></p>
+            <p id="status-chip" class="chip">Saved on this device</p>
+            <div class="timer-actions">
+              <button type="button" id="btn-start" class="btn btn-primary btn-cta">Start Focus</button>
+              <button type="button" id="btn-pause" class="btn btn-secondary">Pause</button>
+              <button type="button" id="btn-skip" class="btn btn-secondary">Skip</button>
+              <button type="button" id="btn-reset" class="btn btn-ghost">Reset</button>
+            </div>
+            <p id="active-task" class="active-task"></p>
+            <p class="hint">Space starts or pauses. Leaving this tab pauses focus and keeps the minutes you already sat.</p>
+            <label class="guard">
+              <input type="checkbox" id="tab-guard" checked />
+              Alarm + pause when I leave this tab
+            </label>
+            <p id="tab-alert-live" class="sr-only" aria-live="assertive"></p>
+          </article>
+
+          <div class="bento">
+            <article class="stat-card">
+              <div class="stat-card-top">
+                <span class="stat-label">Today</span>
+                <span class="stat-icon gold" aria-hidden="true">⏱</span>
+              </div>
+              <p class="stat-value">
+                <strong id="stat-hours">0</strong><span id="stat-hours-unit" class="stat-unit">m</span>
+              </p>
+              <p class="stat-sub"><strong id="stat-minutes">0</strong> focused min</p>
+            </article>
+            <article class="stat-card">
+              <div class="stat-card-top">
+                <span class="stat-label">Goal</span>
+                <span class="stat-icon rust" aria-hidden="true">🔥</span>
+              </div>
+              <p class="stat-value">
+                <strong id="stat-pomos">0</strong><span class="stat-unit"> pomos</span>
+              </p>
+              <p class="stat-sub"><strong id="stat-goal">0 / 4</strong> goal</p>
+            </article>
           </div>
-          <h2 id="pet-name"></h2>
-          <p id="pet-hours" class="hours"></p>
-          <div class="meter" aria-hidden="true">
-            <div id="meter-fill" class="meter-fill"></div>
-          </div>
-          <p id="pet-next" class="next"></p>
+
+          <article class="progress-card stats" aria-labelledby="stats-heading">
+            <div class="progress-head">
+              <h2 id="stats-heading" class="progress-title">Next evolution</h2>
+              <span id="pet-hours" class="hours"></span>
+            </div>
+            <div class="meter" aria-hidden="true">
+              <div id="meter-fill" class="meter-fill"></div>
+            </div>
+            <div class="meter meter-goal" aria-hidden="true"><div id="goal-fill" class="meter-fill"></div></div>
+            <p id="pet-next" class="next"></p>
+          </article>
         </section>
 
-        <section class="timer-card" aria-labelledby="phase-label">
-          <p id="status-chip" class="chip">Saved on this device</p>
-          <p id="phase-label" class="phase"></p>
-          <p id="clock" class="clock">25:00</p>
-          <p id="cycle-meta" class="cycle-meta"></p>
-          <div class="timer-actions">
-            <button type="button" id="btn-start" class="btn btn-primary">Start focus</button>
-            <button type="button" id="btn-pause" class="btn btn-secondary">Pause</button>
-            <button type="button" id="btn-skip" class="btn btn-secondary">Skip</button>
-            <button type="button" id="btn-reset" class="btn btn-ghost">Reset</button>
-          </div>
-          <p id="active-task" class="active-task"></p>
-          <p class="hint">Space starts or pauses. Leaving this tab pauses focus and keeps the minutes you already sat.</p>
-          <label class="guard">
-            <input type="checkbox" id="tab-guard" checked />
-            Alarm + pause when I leave this tab
-          </label>
-          <p id="tab-alert-live" class="sr-only" aria-live="assertive"></p>
-          <details class="settings">
-            <summary>Timer settings</summary>
+        <section id="panel-tasks" class="panel" data-panel="tasks" hidden>
+          <article class="tasks" aria-labelledby="tasks-heading">
+            <h2 id="tasks-heading">Today</h2>
+            <form id="task-form" class="task-form">
+              <label class="label" for="task-input">New task</label>
+              <div class="row">
+                <input id="task-input" class="input" name="title" maxlength="80" placeholder="Read chapter 4" autocomplete="off" />
+                <button type="submit" class="btn btn-primary">Add</button>
+              </div>
+            </form>
+            <ul id="task-list" class="task-list"></ul>
+            <p id="empty-tasks" class="empty">Add one task, then start a focus. The Inklet tracks the hours, not the checkmarks.</p>
+            <button type="button" id="btn-clear-done" class="btn btn-ghost btn-tiny">Clear finished</button>
+          </article>
+        </section>
+
+        <section id="panel-evo" class="panel" data-panel="evo" hidden>
+          <article class="evo-card">
+            <h2>Evolution path</h2>
+            <p class="lede">Focused hours are the only food. Breaks do not count.</p>
+            <ol id="evo-path" class="evo-path"></ol>
+            <p id="evo-standing" class="evo-standing"></p>
+            <p class="hint">Open Dashboard to see your Inklet and the live progress bar.</p>
+          </article>
+        </section>
+
+        <section id="panel-settings" class="panel" data-panel="settings" hidden>
+          <article class="settings-card settings">
+            <h2>Timer settings</h2>
             <div class="settings-grid">
               <label class="field">Focus (min)
                 <input id="set-focus" class="input" type="number" min="1" max="90" value="25" />
@@ -105,33 +153,16 @@
               <input type="checkbox" id="set-pause-leave" checked />
               Pause the clock when I leave (still credit elapsed focus)
             </label>
-          </details>
-        </section>
-
-        <section class="stats" aria-labelledby="stats-heading">
-          <h2 id="stats-heading">Today</h2>
-          <ul class="stat-row">
-            <li><strong id="stat-pomos">0</strong> pomos</li>
-            <li><strong id="stat-minutes">0</strong> focused min</li>
-            <li><strong id="stat-goal">0 / 4</strong> goal</li>
-          </ul>
-          <div class="meter" aria-hidden="true"><div id="goal-fill" class="meter-fill"></div></div>
-        </section>
-
-        <section class="tasks" aria-labelledby="tasks-heading">
-          <h2 id="tasks-heading">Today</h2>
-          <form id="task-form" class="task-form">
-            <label class="label" for="task-input">New task</label>
-            <div class="row">
-              <input id="task-input" class="input" name="title" maxlength="80" placeholder="Read chapter 4" autocomplete="off" />
-              <button type="submit" class="btn btn-primary">Add</button>
-            </div>
-          </form>
-          <ul id="task-list" class="task-list"></ul>
-          <p id="empty-tasks" class="empty">Add one task, then start a focus. The Inklet tracks the hours, not the checkmarks.</p>
-          <button type="button" id="btn-clear-done" class="btn btn-ghost btn-tiny">Clear finished</button>
+          </article>
         </section>
       </main>
+
+      <nav class="dock" aria-label="Primary">
+        <button type="button" class="nav-item is-active" data-nav="dash">Dashboard</button>
+        <button type="button" class="nav-item" data-nav="tasks">Tasks</button>
+        <button type="button" class="nav-item" data-nav="evo">Evolution</button>
+        <button type="button" class="nav-item" data-nav="settings">Settings</button>
+      </nav>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>

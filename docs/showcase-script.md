@@ -77,15 +77,15 @@ Stage directions in *italics*. Spoken lines in roman. **Do not rush the silences
 
 ### Beat 2 — Open the den (30s)
 
-*Open https://romeo-04.github.io/pom-pom/ . Let the dark indigo load. Do not click yet.*  
-“This is Pom-pom. It looks like a study den, not a startup. On the left, a creature made of study-ink. It starts as a drop. It has not earned a face yet. That is honest.”
+*Open https://romeo-04.github.io/pom-pom/ . It lands on the **Dashboard** tab. Let the paper-cream page settle. Do not click yet.*  
+“This is Pom-pom. It looks like a study den, not a startup — warm paper, ink indigo, one column. At the top, a creature made of study-ink. It starts as a drop. It has not earned a face yet. That is honest.”
 
-*Point to the headline.*  
-“Your Inklet grows on focused hours. Not on streaks you fake. Not on checking every box so you can feel clean.”
+*Point to the **Next evolution** card under the two stat tiles.*  
+“Your Inklet grows on focused hours. Not on streaks you fake. Not on checking every box so you can feel clean. That bar is the only scoreboard.”
 
 ### Beat 3 — The list is allowed to be boring (40s)
 
-*Click the task field. Type slowly enough to be read:*
+*Tap **Tasks** in the bottom dock. Click the task field. Type slowly enough to be read:*
 
 - `Write lab intro`  
 - Add  
@@ -93,7 +93,7 @@ Stage directions in *italics*. Spoken lines in roman. **Do not rush the silences
 - Add  
 - `Text group: I’m on the intro, not the memes`  
 
-*Select **Write lab intro** as Active if it isn’t already.*  
+*Press **Focus this** on **Write lab intro** if it is not already **Active**, then tap **Dashboard** to go back to the clock.*  
 “We did not build a social network for tasks. Mira already has five of those. Today is three lines. The active one is what the hours will feed. If she forgets to pick, the Inklet still eats. The work still happened. We don’t punish a missing click.”
 
 ### Beat 4 — The contract of twenty-five minutes (40s)
@@ -112,8 +112,8 @@ Stage directions in *italics*. Spoken lines in roman. **Do not rush the silences
 *Look at the audience.*  
 “And here is the moment of truth, because Mira is us. Someone pings. The muscle memory is already moving.”
 
-*Check that **Sound an alarm if I leave this tab during focus** is on.*  
-“We asked the browser for a sound, and if she allows it, a notification. Not a leaderboard. A tap on the shoulder.”
+*Check that **Alarm + pause when I leave this tab** is on — it sits right under the timer controls.*  
+“We asked the browser for a sound, and if she allows it, a notification. Not a leaderboard. A tap on the shoulder. And the clock stops — but it keeps every minute she already sat.”
 
 *Switch to a new tab or click away. Let the two-tone alarm play. Wait until it finishes. Come back.*  
 “Hear that? That is not a streak dying. That is: *you said you were here.* Mira can ignore it. She is an adult. But she cannot pretend the leaving didn’t happen. Kindness without a spine is just another app she will close.”
@@ -126,7 +126,10 @@ Stage directions in *italics*. Spoken lines in roman. **Do not rush the silences
 “When she stays, the minutes go into the task and into the creature. The pet is a progress bar with a face. We did that on purpose. Numbers are easy to ignore. A drop of ink becoming a kit is harder to shrug off — not because we tricked her brain with dopamine, but because care wants an object.”
 
 *Click **Add 1 focused hour** twice (or as needed) until **Spark kit** and the Evolved chip.*  
-“Two focused hours. Not two hours of ‘I had VS Code open.’ The drop becomes a Spark kit. Later: pup, scholar, guardian, constellation. The stages are slow on purpose. You cannot binge-evolve in an all-nighter and call it growth. Mira’s relationship with this thing is supposed to feel like a plant, not a loot box.”
+“Two focused hours. Not two hours of ‘I had VS Code open.’ The drop becomes a Spark kit.”
+
+*Tap **Evolution** in the dock. The six stages are listed with their hour costs; the one she is on is boxed.*  
+“Later: Pup at eight hours, Scholar at twenty, Guardian at forty-five, Constellation at eighty. The stages are slow on purpose. You cannot binge-evolve in an all-nighter and call it growth. Mira’s relationship with this thing is supposed to feel like a plant, not a loot box.”
 
 ### Beat 7 — Install, pocket, campus Wi‑Fi (35s)
 
@@ -166,13 +169,14 @@ Stage directions in *italics*. Spoken lines in roman. **Do not rush the silences
 
 ## Click track (print this on a sticky)
 
-1. Clear `hatch.v1` → refresh  
-2. Add `Write lab intro` → Add `Fix the 401 on Vercel`  
-3. Start focus → wait 8 seconds  
-4. Leave tab → alarm → return  
+1. Clear `hatch.v1` → refresh (lands on **Dashboard**)  
+2. **Tasks** tab → add `Write lab intro` → add `Fix the 401 on Vercel` → **Focus this**  
+3. **Dashboard** tab → Start Focus → wait 8 seconds  
+4. Leave tab → alarm → return (clock is paused, minutes kept)  
 5. Add 1 focused hour × 2 → Spark kit  
-6. Mention install / PWA  
-7. Hands off, last line
+6. **Evolution** tab → show the ladder  
+7. Mention install / PWA  
+8. Hands off, last line
 
 ---
 
