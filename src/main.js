@@ -93,6 +93,8 @@ const els = {
   setPauseLeave: document.getElementById("set-pause-leave"),
   statPomos: document.getElementById("stat-pomos"),
   statMinutes: document.getElementById("stat-minutes"),
+  statHours: document.getElementById("stat-hours"),
+  statHoursUnit: document.getElementById("stat-hours-unit"),
   statGoal: document.getElementById("stat-goal"),
   goalFill: document.getElementById("goal-fill"),
   btnClearDone: document.getElementById("btn-clear-done"),
@@ -210,10 +212,10 @@ function renderTimer() {
   els.btnStart.textContent = isPaused()
     ? "Resume"
     : phase === PHASE.IDLE
-      ? "Start focus"
+      ? "Start Focus"
       : running && phase !== PHASE.FOCUS
         ? "Running…"
-        : "Start focus";
+        : "Start Focus";
   els.btnStart.disabled = running;
   els.btnPause.disabled = !running;
 
@@ -235,8 +237,16 @@ function renderTimer() {
 function renderStats() {
   const today = state.today || { focusedMs: 0, pomos: 0 };
   const goal = state.dailyGoalPomos || 4;
+  const mins = Math.round(today.focusedMs / 60000);
+  const hours = today.focusedMs / 3600000;
   els.statPomos.textContent = String(today.pomos);
-  els.statMinutes.textContent = String(Math.round(today.focusedMs / 60000));
+  els.statMinutes.textContent = String(mins);
+  if (els.statHours) {
+    els.statHours.textContent = hours >= 1 ? hours.toFixed(1) : String(mins);
+  }
+  if (els.statHoursUnit) {
+    els.statHoursUnit.textContent = hours >= 1 ? "h" : "m";
+  }
   els.statGoal.textContent = `${today.pomos} / ${goal}`;
   els.goalFill.style.width = `${Math.min(1, today.pomos / goal) * 100}%`;
 }
@@ -555,6 +565,18 @@ debug.addEventListener("click", () => {
   render();
 });
 document.querySelector(".pet-well")?.append(debug);
+
+document.querySelectorAll("[data-nav]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const id = btn.dataset.nav;
+    document.querySelectorAll(".panel").forEach((panel) => {
+      panel.hidden = panel.dataset.panel !== id;
+    });
+    document.querySelectorAll("[data-nav]").forEach((nav) => {
+      nav.classList.toggle("is-active", nav === btn);
+    });
+  });
+});
 
 tickId = window.setInterval(onTick, 250);
 bindInstallButton(els.btnInstall);
